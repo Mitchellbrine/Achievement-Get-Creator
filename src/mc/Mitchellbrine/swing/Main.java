@@ -4,7 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 /**
  * Created by Mitchellbrine on 2015.
@@ -132,7 +135,7 @@ public class Main implements Runnable{
 
 		yLevel += 32;
 
-		final JTextField color = new JTextField("light_grey");
+		final JTextField color = new JTextField("gray");
 
 		color.setBounds(0,yLevel,350,30);
 
@@ -166,6 +169,56 @@ public class Main implements Runnable{
 		final JButton finalize = new JButton("Generate JSON");
 
 		finalize.setBounds(10,yLevel,330,40);
+
+		finalize.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder builder = new StringBuilder();
+				builder.append("[");
+				for (JSONAchievement achievement : achievements) {
+					builder.append("{\n");
+					builder.append("\t\"id\": \"" + achievement.id + "\",\n");
+					builder.append("\t\"name\": \"" + achievement.name + "\",\n");
+					builder.append("\t\"desc\": \"" + achievement.desc + "\",\n");
+					String parentString = !achievement.parent.equalsIgnoreCase("null") ? "\"" + achievement.parent + "\"" : "null";
+					builder.append("\t\"parent\": " + parentString + ",\n");
+					builder.append("\t\"stat\": \"" + achievement.stat + "\",\n");
+					if (!achievement.item.equalsIgnoreCase("minecraft:apple")) {
+						builder.append("\t\"item\": \"" + achievement.item + "\",\n");
+					}
+					if (!achievement.color.equalsIgnoreCase("gray")) {
+						builder.append("\t\"color\": \"" + achievement.color + "\",\n");
+					}
+					builder.append("\t\"count\": " + achievement.count + ",\n");
+					builder.append("\t\"xPos\": " + achievement.xPos + ",\n");
+					builder.append("\t\"yPos\": " + achievement.yPos + ",\n");
+					if (achievement.isSpecial) {
+						builder.append("\t\"special\": true,\n");
+					}
+					builder.append("}");
+					if (achievements.indexOf(achievement) < (achievements.size() - 1)) {
+						builder.append(",");
+						builder.append("\n");
+					}
+				}
+				builder.append("]");
+
+				File output = new File(IOUtils.getDirectory(), Calendar.getInstance().get(Calendar.MONTH) + "-" + Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "-" + Calendar.getInstance().get(Calendar.YEAR) + "-" + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + "." + Calendar.getInstance().get(Calendar.MINUTE) + ".json");
+
+				if (!output.getParentFile().exists()) {
+					output.getParentFile().mkdirs();
+				}
+
+				try {
+					PrintWriter writer = new PrintWriter(output);
+					writer.println(builder.toString());
+					writer.close();
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+
+			}
+		});
 
 		frame.add(button);
 		frame.add(finalize);
