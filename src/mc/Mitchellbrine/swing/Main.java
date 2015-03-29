@@ -6,8 +6,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by Mitchellbrine on 2015.
@@ -21,7 +23,6 @@ public class Main implements Runnable{
 		SwingUtilities.invokeLater(main);
 	}
 
-	@Override
 	public void run() {
 		openScreen();
 	}
@@ -50,7 +51,7 @@ public class Main implements Runnable{
 		return ach;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"rawtypes","unchecked"})
 	public void insertComponents(final JFrame frame) {
 		String labelString = "Welcome to the Achievement Get achievement creator";
 		JLabel label = new JLabel(labelString);
@@ -66,63 +67,73 @@ public class Main implements Runnable{
 
 		int yLevel = 52;
 
-		final JTextField id = new JTextField("Id:");
+		final String idString = "Id:";
+		final JTextField id = new JTextField(idString);
 		id.setToolTipText("This value has no default value and must be changed");
 
 		id.setBounds(0,50,350,30);
 
 		yLevel += 30;
 
-		final JTextField name = new JTextField("Name:");
+		final String nameString = "Name:";
+		final JTextField name = new JTextField(nameString);
 		name.setToolTipText("This value has no default value and must be changed");
 
 		name.setBounds(0,yLevel,350,30);
 
 		yLevel += 32;
 
-		final JTextArea desc = new JTextArea("Description:");
+		final String descString = "Description:";
+		final JTextArea desc = new JTextArea(descString);
 		desc.setToolTipText("This value has no default value and must be changed");
 
 		desc.setBounds(0,yLevel,350,60);
 
 		yLevel += 62;
 
-		final JTextField parent = new JTextField("Parent:");
+		final String parentString = "Parent:";
+		final JTextField parent = new JTextField(parentString);
 		parent.setToolTipText("This value has no default value. (CAN BE NULL)");
 
 		parent.setBounds(0,yLevel,350,30);
 
 		yLevel += 32;
 
-		final JTextField stat = new JTextField("Stat Name:");
+		final String statString = "Stat Name:";
+		final JTextField stat = new JTextField(statString);
 		stat.setToolTipText("This value has no default value and must be changed");
 
 		stat.setBounds(0,yLevel,350,30);
 
 		yLevel += 32;
 
-		final JTextField count = new JTextField("Count:");
+		final SpinnerModel countModel = new SpinnerNumberModel(1,1,Integer.MAX_VALUE,1);
+
+		final JSpinner count = new JSpinner(countModel);
 		count.setToolTipText("This value has no default value and must be changed (MUST BE INTEGER)");
 
 		count.setBounds(0,yLevel,350,30);
 
 		yLevel += 32;
 
-		final JTextField xPos = new JTextField("X Position:");
+		final SpinnerModel xPosModel = new SpinnerNumberModel(0,-20,20,1);
+		final SpinnerModel yPosModel = new SpinnerNumberModel(0,-20,20,1);
+
+		final JSpinner xPos = new JSpinner(xPosModel);
 		xPos.setToolTipText("This value has no default value and must be changed (MUST BE INTEGER)");
 
 		xPos.setBounds(0,yLevel,350,30);
 
 		yLevel += 32;
 
-		final JTextField yPos = new JTextField("Y Position:");
+		final JSpinner yPos = new JSpinner(yPosModel);
 		yPos.setToolTipText("This value has no default value and must be changed (MUST BE INTEGER)");
 
 		yPos.setBounds(0,yLevel,350,30);
 
 		yLevel += 32;
 
-		final JTextField isSpecial = new JTextField("Is it Special:");
+		final JComboBox isSpecial = new JComboBox<String>(new String[]{"false","true"});
 		isSpecial.setToolTipText("This value has no default value and must be changed (MUST BE BOOLEAN)");
 
 		isSpecial.setBounds(0,yLevel,350,30);
@@ -157,9 +168,10 @@ public class Main implements Runnable{
 		button.setBounds(10,yLevel,330,40);
 
 		button.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				achievements.add(new JSONAchievement(id.getText(),name.getText(),desc.getText(),parent.getText(),stat.getText(),item.getText(),color.getText(),Boolean.parseBoolean(isSpecial.getText()),Integer.parseInt(count.getText()),Integer.parseInt(xPos.getText()),Integer.parseInt(yPos.getText())));
+				if (id.getText().equalsIgnoreCase(idString) || name.getText().equalsIgnoreCase(nameString) || desc.getText().equalsIgnoreCase(descString) || parent.getText().equalsIgnoreCase(parentString) || stat.getText().equalsIgnoreCase(statString))
+					return;
+				achievements.add(new JSONAchievement(id.getText(),name.getText(),desc.getText(),parent.getText(),stat.getText(),item.getText(),color.getText(),Boolean.parseBoolean((String) isSpecial.getItemAt(isSpecial.getSelectedIndex())),(Integer)count.getModel().getValue(),(Integer)xPos.getModel().getValue(),(Integer)yPos.getModel().getValue()));
 				achBox.setModel(new DefaultComboBoxModel<String>(getAchNames()));
 			}
 		});
@@ -171,45 +183,48 @@ public class Main implements Runnable{
 		finalize.setBounds(10,yLevel,330,40);
 
 		finalize.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
 				StringBuilder builder = new StringBuilder();
-				builder.append("[");
+				builder.append("[\n");
 				for (JSONAchievement achievement : achievements) {
-					builder.append("{\n");
-					builder.append("\t\"id\": \"" + achievement.id + "\",\n");
-					builder.append("\t\"name\": \"" + achievement.name + "\",\n");
-					builder.append("\t\"desc\": \"" + achievement.desc + "\",\n");
+					builder.append("\t{\n");
+					builder.append("\t\t\"id\": \"" + achievement.id + "\",\n");
+					builder.append("\t\t\"name\": \"" + achievement.name + "\",\n");
+					builder.append("\t\t\"desc\": \"" + achievement.desc + "\",\n");
 					String parentString = !achievement.parent.equalsIgnoreCase("null") ? "\"" + achievement.parent + "\"" : "null";
-					builder.append("\t\"parent\": " + parentString + ",\n");
-					builder.append("\t\"stat\": \"" + achievement.stat + "\",\n");
+					builder.append("\t\t\"parent\": " + parentString + ",\n");
+					builder.append("\t\t\"stat\": \"" + achievement.stat + "\",\n");
 					if (!achievement.item.equalsIgnoreCase("minecraft:apple")) {
-						builder.append("\t\"item\": \"" + achievement.item + "\",\n");
+						builder.append("\t\t\"item\": \"" + achievement.item + "\",\n");
 					}
 					if (!achievement.color.equalsIgnoreCase("gray")) {
-						builder.append("\t\"color\": \"" + achievement.color + "\",\n");
+						builder.append("\t\t\"color\": \"" + achievement.color + "\",\n");
 					}
-					builder.append("\t\"count\": " + achievement.count + ",\n");
-					builder.append("\t\"xPos\": " + achievement.xPos + ",\n");
-					builder.append("\t\"yPos\": " + achievement.yPos + ",\n");
+					builder.append("\t\t\"count\": " + achievement.count + ",\n");
+					builder.append("\t\t\"xPos\": " + achievement.xPos + ",\n");
+					builder.append("\t\t\"yPos\": " + achievement.yPos + ",\n");
 					if (achievement.isSpecial) {
-						builder.append("\t\"special\": true,\n");
+						builder.append("\t\t\"special\": true,\n");
 					}
-					builder.append("}");
+					builder.append("\t}");
 					if (achievements.indexOf(achievement) < (achievements.size() - 1)) {
 						builder.append(",");
-						builder.append("\n");
 					}
+					builder.append("\n");
 				}
 				builder.append("]");
 
-				File output = new File(IOUtils.getDirectory(), Calendar.getInstance().get(Calendar.MONTH) + "-" + Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "-" + Calendar.getInstance().get(Calendar.YEAR) + "-" + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + "." + Calendar.getInstance().get(Calendar.MINUTE) + ".json");
+				DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
+				Date date = new Date();
+
+				File output = new File(IOUtils.getDirectory(), dateFormat.format(date) + ".json");
 
 				if (!output.getParentFile().exists()) {
 					output.getParentFile().mkdirs();
 				}
 
 				try {
+					output.createNewFile();
 					PrintWriter writer = new PrintWriter(output);
 					writer.println(builder.toString());
 					writer.close();

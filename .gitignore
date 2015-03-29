@@ -5,6 +5,7 @@
 *.pydevproject
 .project
 .metadata
+*.userlibraries
 bin/
 tmp/
 *.tmp
@@ -23,6 +24,7 @@ build/
 *.ipr
 *.iws
 out/
+target/
 
 # External tool builders
 .externalToolBuilders/
