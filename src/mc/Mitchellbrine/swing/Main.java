@@ -171,7 +171,13 @@ public class Main implements Runnable{
 			public void actionPerformed(ActionEvent e) {
 				if (id.getText().equalsIgnoreCase(idString) || name.getText().equalsIgnoreCase(nameString) || desc.getText().equalsIgnoreCase(descString) || parent.getText().equalsIgnoreCase(parentString) || stat.getText().equalsIgnoreCase(statString))
 					return;
-				achievements.add(new JSONAchievement(id.getText(),name.getText(),desc.getText(),parent.getText(),stat.getText(),item.getText(),color.getText(),Boolean.parseBoolean((String) isSpecial.getItemAt(isSpecial.getSelectedIndex())),(Integer)count.getModel().getValue(),(Integer)xPos.getModel().getValue(),(Integer)yPos.getModel().getValue()));
+				if (getAchievement(id.getText()) == null) {
+					achievements.add(new JSONAchievement(id.getText(), name.getText(), desc.getText(), parent.getText(), stat.getText(), item.getText(), color.getText(), Boolean.parseBoolean((String) isSpecial.getItemAt(isSpecial.getSelectedIndex())), (Integer) count.getModel().getValue(), (Integer) xPos.getModel().getValue(), (Integer) yPos.getModel().getValue()));
+				} else {
+					JSONAchievement ach = getAchievement(id.getText());
+					achievements.remove(ach);
+					achievements.add(new JSONAchievement(id.getText(), name.getText(), desc.getText(), parent.getText(), stat.getText(), item.getText(), color.getText(), Boolean.parseBoolean((String) isSpecial.getItemAt(isSpecial.getSelectedIndex())), (Integer) count.getModel().getValue(), (Integer) xPos.getModel().getValue(), (Integer) yPos.getModel().getValue()));
+				}
 				achBox.setModel(new DefaultComboBoxModel<String>(getAchNames()));
 			}
 		});
@@ -184,9 +190,17 @@ public class Main implements Runnable{
 
 		finalize.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				ArrayList<JSONAchievement> achievements1 = new ArrayList<JSONAchievement>();
+				for (JSONAchievement ach : achievements) {
+					if (ach.parent != null && getAchievement(ach.parent) != null && achievements.indexOf(getAchievement(ach.parent)) > (achievements1.size() - 1)) {
+						achievements1.add(getAchievement(ach.parent));
+					}
+					if (getAchievement(achievements1,ach.id) == null)
+						achievements1.add(ach);
+				}
 				StringBuilder builder = new StringBuilder();
 				builder.append("[\n");
-				for (JSONAchievement achievement : achievements) {
+				for (JSONAchievement achievement : achievements1) {
 					builder.append("\t{\n");
 					builder.append("\t\t\"id\": \"" + achievement.id + "\",\n");
 					builder.append("\t\t\"name\": \"" + achievement.name + "\",\n");
@@ -207,7 +221,7 @@ public class Main implements Runnable{
 						builder.append("\t\t\"special\": true,\n");
 					}
 					builder.append("\t}");
-					if (achievements.indexOf(achievement) < (achievements.size() - 1)) {
+					if (achievements1.indexOf(achievement) < (achievements1.size() - 1)) {
 						builder.append(",");
 					}
 					builder.append("\n");
@@ -238,6 +252,25 @@ public class Main implements Runnable{
 		frame.add(button);
 		frame.add(finalize);
 
+		achBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (getAchievement(((String)achBox.getItemAt(achBox.getSelectedIndex()))) != null) {
+					JSONAchievement ach = (JSONAchievement)getAchievement((String)achBox.getItemAt(achBox.getSelectedIndex()));
+					id.setText(ach.id);
+					name.setText(ach.name);
+					desc.setText(ach.desc);
+					parent.setText(ach.parent);
+					stat.setText(ach.stat);
+					color.setText(ach.color);
+					item.setText(ach.item);
+					count.getModel().setValue(ach.count);
+					xPos.getModel().setValue(ach.xPos);
+					yPos.getModel().setValue(ach.yPos);
+					isSpecial.getModel().setSelectedItem(ach.isSpecial);
+				}
+			}
+		});
+
 	}
 
 	public static String[] getAchNames() {
@@ -246,6 +279,14 @@ public class Main implements Runnable{
 			array[achievements.indexOf(ach)] = ach.id;
 		}
 		return array;
+	}
+
+	public static JSONAchievement getAchievement(java.util.List<JSONAchievement> arrays,String name) {
+		for (JSONAchievement achieve : arrays) {
+			if (achieve.id.equalsIgnoreCase(name))
+				return achieve;
+		}
+		return null;
 	}
 
 }
